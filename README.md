@@ -1,174 +1,309 @@
-# HireU — AI Resume Intelligence Platform
+# HireU — AI Resume Analyzer
 
-**HireU** is an AI-powered resume analysis and candidate shortlisting platform. Upload a Job Description and a batch of candidate resumes to get an AI-scored ranked shortlist — complete with Skill Gap Analysis, AI Hiring Insights, and Human-in-the-Loop overrides.
+HireU is a resume analysis and candidate shortlisting system built to help recruiters quickly evaluate candidates using AI.
 
-> Built with Google Gemini, LangChain, FastAPI, and Streamlit.
+The platform parses Job Descriptions, analyzes resumes, compares candidate skills against role requirements, and generates ranked hiring recommendations with transparent scoring and skill gap analysis.
 
----
-
-## ✨ Features
-
-- **📄 JD Parsing** — Extracts structured role requirements from raw Job Description text using Gemini AI.
-- **👤 Resume Parsing** — Parses PDF, DOCX, and LinkedIn JSON profiles into a strict `Candidate` schema.
-- **📊 AI Scoring Engine** — Scores each candidate across 5 weighted dimensions:
-  - Skills (30%), Experience (25%), Projects (20%), Education (15%), Communication (10%)
-- **🔬 Skill Gap Analysis** — Compares JD skills vs. candidate skills semantically and shows:
-  - ✅ Matched skills (green chips)
-  - ❌ Missing skills (red chips)
-  - 📈 Skill compatibility percentage with a visual progress bar
-- **🤖 AI Hiring Insight** — Gemini-generated recruiter-style summary covering candidate strengths, skill gaps, and a final interview recommendation.
-- **⚖️ Human-in-the-Loop Override** — Manually adjust any candidate's score with a reason log.
-- **📁 Report Export** — Generate HTML, PDF, and JSON shortlist reports.
+Built using FastAPI, Streamlit, LangChain, and Google Gemini.
 
 ---
 
-## 🏗️ Architecture
+## Why I Built This
+
+Recruiters often spend a lot of time manually screening resumes, especially for internship and entry-level roles. I wanted to build a system that could automate parts of this workflow while still keeping the scoring transparent and explainable.
+
+This project was built as part of an AI Enablement internship task and helped me explore:
+
+* LLM-based structured extraction
+* semantic similarity search
+* FastAPI backend development
+* Streamlit dashboards
+* AI-assisted scoring systems
+
+---
+
+## Features
+
+### JD Parsing
+
+Extracts structured role requirements from raw Job Description text using Gemini AI.
+
+### Resume Parsing
+
+Parses:
+
+* PDF resumes
+* DOCX resumes
+* LinkedIn-style JSON profiles
+
+into a structured `Candidate` schema.
+
+### AI Candidate Scoring
+
+Candidates are evaluated across 5 weighted dimensions:
+
+| Dimension     | Weight |
+| ------------- | ------ |
+| Skills Match  | 30%    |
+| Experience    | 25%    |
+| Projects      | 20%    |
+| Education     | 15%    |
+| Communication | 10%    |
+
+The system generates:
+
+* dimension-level scores
+* weighted final score
+* recommendation labels
+* one-line justifications
+
+---
+
+## Skill Gap Analysis
+
+HireU compares:
+
+* skills extracted from the Job Description
+* skills extracted from candidate resumes
+
+and displays:
+
+* matched skills
+* missing skills
+* skill compatibility percentage
+
+The dashboard also includes:
+
+* visual progress indicators
+* recommendation labels
+* AI-generated hiring insights
+
+---
+
+## AI Hiring Insight
+
+The system generates a short recruiter-style summary describing:
+
+* candidate strengths
+* missing technical areas
+* overall fit for the role
+* interview recommendation
+
+---
+
+## Human-in-the-Loop Override
+
+Recruiters can manually:
+
+* override candidate scores
+* provide reasoning for score changes
+* review detailed scoring breakdowns
+
+This keeps the final decision process transparent and controllable.
+
+---
+
+## Project Architecture
 
 ```mermaid
 flowchart LR
-  A[JD Raw Text] --> B[parse_jd — Gemini]
-  B --> C[JobDescription Schema]
+  A[Job Description Input] --> B[JD Parser - Gemini]
+  B --> C[Structured JD Schema]
 
-  D[PDF/DOCX/JSON Uploads] --> E[File Parsers]
+  D[Resume Uploads] --> E[PDF/DOCX Parsers]
   E --> F[Raw Candidate Text]
-  F --> H[candidate_extractor — Gemini]
-  H --> I[Candidate Schema]
 
-  C --> J[scoring_engine]
-  I --> J
-  J --> K[semantic_matcher — all-MiniLM-L6-v2]
-  J --> L[LLM rubric scores — 4 dimensions]
-  J --> SG[skill_gap — Skill Gap Analysis]
-  J --> AI[AI Hiring Insight — Gemini]
-  K --> M[Weighted Final Score]
-  L --> M
-  M --> N[Ranked Shortlist]
-  N --> O[Streamlit UI + Reports]
+  F --> G[Candidate Extraction - Gemini]
+  G --> H[Candidate Schema]
+
+  C --> I[Scoring Engine]
+  H --> I
+
+  I --> J[Semantic Skill Matching]
+  I --> K[LLM Rubric Scoring]
+  I --> L[Skill Gap Analysis]
+
+  J --> M[Final Weighted Score]
+  K --> M
+
+  L --> N[AI Hiring Insight]
+
+  M --> O[Ranked Shortlist]
+  N --> O
+
+  O --> P[Streamlit Dashboard + Reports]
 ```
 
 ---
 
-## 🚀 Quick Start
+## Tech Stack
 
-### 1. Clone & Install
+| Layer          | Technology                                 |
+| -------------- | ------------------------------------------ |
+| Backend        | FastAPI, Uvicorn                           |
+| Frontend       | Streamlit                                  |
+| AI / LLM       | Google Gemini 2.5 Flash                    |
+| AI Framework   | LangChain                                  |
+| Embeddings     | sentence-transformers (`all-MiniLM-L6-v2`) |
+| Resume Parsing | PyMuPDF, python-docx                       |
+| Validation     | Pydantic                                   |
+| Reports        | Jinja2, ReportLab                          |
+
+---
+
+## Model Choice
+
+### LLM Used
+
+* Model: `gemini-2.5-flash`
+* Provider: Google Generative AI
+
+### Why This Model?
+
+I chose Gemini 2.5 Flash because it provides:
+
+* fast response times
+* good structured extraction quality
+* reliable scoring outputs
+* cost-efficient experimentation during development
+
+The model is used for:
+
+* JD parsing
+* candidate extraction
+* rubric scoring
+* hiring insight generation
+
+---
+
+## Scoring Logic
+
+### Weighted Evaluation
+
+| Component     | Weight |
+| ------------- | ------ |
+| Skills Match  | 30%    |
+| Experience    | 25%    |
+| Projects      | 20%    |
+| Education     | 15%    |
+| Communication | 10%    |
+
+### Recommendation Thresholds
+
+| Score    | Recommendation |
+| -------- | -------------- |
+| 75+      | Strong Hire    |
+| 60–74    | Hire           |
+| 45–59    | Needs Review   |
+| Below 45 | No-Hire        |
+
+### Skill Match Thresholds
+
+| Match %   | Label       |
+| --------- | ----------- |
+| 85%+      | Strong Hire |
+| 70–84%    | Hire        |
+| 50–69%    | Consider    |
+| Below 50% | Reject      |
+
+---
+
+## Setup Instructions
+
+Clone repository:
 
 ```bash
 git clone https://github.com/watdasouvikdoin/HireU-AI-Resume-Analyzer.git
 cd HireU-AI-Resume-Analyzer/project
+```
+
+Create virtual environment:
+
+```bash
+python -m venv venv
+source venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+---
+
+## Configure Environment Variables
+
+Create `.env` file:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `project/.env` and set:
-```
-GOOGLE_API_KEY=your_gemini_api_key_here
-API_KEY=your_secure_api_key_for_endpoints
+Add:
+
+```env
+GOOGLE_API_KEY=your_gemini_api_key
+API_KEY=your_api_key
 ```
 
-Get your free Gemini API key at: https://aistudio.google.com/app/apikey
+---
 
-### 3. Start the Backend
+## Running the Backend
 
 ```bash
-cd project
 uvicorn app.main:app --reload
 ```
 
-Backend runs at: `http://127.0.0.1:8000`
+Backend:
 
-### 4. Start the Frontend
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+## Running the Frontend
 
 ```bash
-cd project
 streamlit run streamlit_app.py
 ```
 
-Frontend runs at: `http://localhost:8501`
+Frontend:
 
----
-
-## 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/health` | Health check |
-| `POST` | `/api/v1/parse_jd` | Parse raw JD text into structured schema |
-| `POST` | `/api/v1/upload_resumes` | Upload and extract candidate profiles |
-| `POST` | `/api/v1/analyze_candidates` | Score, rank, and generate skill gap analysis |
-| `POST` | `/api/v1/skill_gap` | Standalone skill gap for a JD + candidate pair |
-| `POST` | `/api/v1/generate_report` | Export shortlist as HTML / PDF / JSON |
-| `POST` | `/api/v1/override_score` | Apply human override to a candidate's score |
-
----
-
-## 📈 Scoring Logic
-
-**Weighted dimensions** (`project/app/services/scoring_engine.py`):
-
-| Dimension | Weight | Method |
-|-----------|--------|--------|
-| Skills | 30% | Semantic similarity (`all-MiniLM-L6-v2`) |
-| Experience | 25% | Gemini LLM rubric (0–10) |
-| Projects | 20% | Gemini LLM rubric (0–10) |
-| Education | 15% | Gemini LLM rubric (0–10) |
-| Communication | 10% | Gemini LLM rubric (0–10) |
-
-**Recommendation thresholds:**
-
-| Score | Label |
-|-------|-------|
-| ≥ 75 | ✅ Strong Hire |
-| ≥ 60 | 🟢 Hire |
-| ≥ 45 | 🟡 Needs Review |
-| < 45 | 🔴 No-Hire |
-
-**Skill Gap thresholds:**
-
-| Skill Match % | Label |
-|---------------|-------|
-| ≥ 85% | 💚 Strong Hire |
-| ≥ 70% | 🔵 Hire |
-| ≥ 50% | 🟡 Consider |
-| < 50% | 🔴 Reject |
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| AI / LLM | Google Gemini 2.5 Flash via `langchain-google-genai` |
-| Semantic Matching | `sentence-transformers` (`all-MiniLM-L6-v2`) |
-| Backend | FastAPI, Uvicorn |
-| Frontend | Streamlit |
-| Data Validation | Pydantic, pydantic-settings |
-| Resume Parsing | PyMuPDF, python-docx |
-| Report Generation | Jinja2, ReportLab |
-
----
-
-## 📁 Project Structure
-
+```text
+http://localhost:8501
 ```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint                     | Description                 |
+| ------ | ---------------------------- | --------------------------- |
+| GET    | `/api/v1/health`             | Health check                |
+| POST   | `/api/v1/parse_jd`           | Parse Job Description       |
+| POST   | `/api/v1/upload_resumes`     | Upload resumes              |
+| POST   | `/api/v1/analyze_candidates` | Analyze and rank candidates |
+| POST   | `/api/v1/skill_gap`          | Skill gap analysis          |
+| POST   | `/api/v1/generate_report`    | Export reports              |
+| POST   | `/api/v1/override_score`     | Human score override        |
+
+---
+
+## Project Structure
+
+```text
 HireU-AI-Resume-Analyzer/
 ├── project/
 │   ├── app/
-│   │   ├── api/endpoints.py          # All API routes
-│   │   ├── models/                   # Pydantic schemas (JD, Candidate)
-│   │   ├── parsers/                  # PDF, DOCX, LinkedIn parsers
+│   │   ├── api/
+│   │   ├── models/
+│   │   ├── parsers/
+│   │   ├── reporting/
 │   │   ├── services/
-│   │   │   ├── jd_parser.py          # JD extraction with Gemini
-│   │   │   ├── scoring_engine.py     # Weighted scoring logic
-│   │   │   ├── semantic_matcher.py   # Skill similarity with embeddings
-│   │   │   └── skill_gap.py          # Skill Gap Analysis + AI Insight
-│   │   ├── reporting/                # HTML, PDF report generators
-│   │   └── utils/config.py           # Settings & env vars
-│   ├── streamlit_app.py              # Streamlit frontend
+│   │   └── utils/
+│   ├── streamlit_app.py
 │   └── requirements.txt
 ├── LICENSE
 └── README.md
@@ -176,14 +311,48 @@ HireU-AI-Resume-Analyzer/
 
 ---
 
-## 🔐 Security
+## Security Notes
 
-- API key authentication via `X-API-Key` header (middleware in `app/security/`).
-- `.env` is gitignored — never committed.
-- See `project/SECURITY.md` for full security notes.
+* API keys are stored using `.env`
+* `.env` is excluded using `.gitignore`
+* Structured outputs reduce malformed AI responses
+* Resume data is processed locally during runtime
+* Human override support prevents fully automated decisions
 
 ---
 
-## 📄 License
+## Current Limitations
 
-MIT License © 2026 Souvik Ghosh
+* LinkedIn integration currently supports JSON input only
+* Skill matching depends on resume formatting quality
+* LLM scoring may vary slightly between runs
+* Large resume batches may increase response time
+
+---
+
+## Future Improvements
+
+* LinkedIn API integration
+* Authentication system
+* Recruiter dashboards
+* Resume analytics visualizations
+* Interview question generation
+* Multi-role comparison support
+
+---
+
+## Screenshots
+
+Add screenshots for:
+
+* JD Parsing
+* Ranked Shortlist
+* Skill Gap Analysis
+* AI Hiring Insights
+* Human Override Dashboard
+
+---
+
+## Author
+
+Developed by Souvik Ghosh
