@@ -1,137 +1,379 @@
-# HR-Resume-LinkedIn-Shortlisting-Agent
+# HireU-AI-Resume-Analyzer
 
-**HR Resume & LinkedIn Shortlisting Agent** helps hiring teams process a Job Description (JD), parse candidate profiles from resumes/LinkedIn data, score candidates with semantic + model-based checks, and generate shortlist reports.
+## HireU — AI Resume Intelligence & Candidate Shortlisting Platform
 
-Repository structure note: implementation lives in `project/`.
+HireU is an AI-powered resume intelligence platform designed to help recruiters and hiring teams streamline candidate screening, resume analysis, and shortlist generation using Large Language Models (LLMs), semantic matching, and explainable scoring pipelines.
 
-## Project Overview
+The platform parses Job Descriptions (JDs), analyzes candidate resumes and LinkedIn-style profile data, evaluates candidate-job compatibility, identifies skill gaps, and generates transparent hiring recommendations with recruiter-friendly insights.
 
-This system helps HR teams shortlist candidates with transparent scoring:
+Repository structure note: implementation lives inside the `project/` directory.
 
-- Parse JD text into a strict `JobDescription` schema.
-- Parse resumes (`.pdf`, `.docx`) and profile JSON into a strict `Candidate` schema.
-- Score candidates using:
-  - semantic skill matching (`all-MiniLM-L6-v2`) and
-  - LLM-based rubric scoring for experience, education, projects, and communication.
-- Compute deterministic weighted final score in Python.
-- Rank candidates and generate HTML/PDF/JSON reports.
-- Support human overrides with reason logging.
+---
 
-## Implementation Notes
+# Features
 
-### 1) Model Choice
+## AI-Powered Resume Analysis
 
-- **Model:** `gemini-2.5-flash`
-- **Provider:** Google (via `langchain-google-genai`)
-- **Why this model:** fast responses, strong structured extraction/scoring quality for this task, and cost-effective iteration.
-- **How it's used:** full JD/resume text is passed to the model, and structured output is enforced with LangChain `with_structured_output(...)`.
+* Parse and structure candidate resumes from:
 
-### 2) Framework
+  * PDF resumes
+  * DOCX resumes
+  * JSON profile data
 
-- **Framework:** LangChain (single orchestration flow in this project; not multi-agent).
-- **Version source:** installed through `project/requirements.txt` (`langchain`, `langchain-google-genai`).
-- **Architecture usage in this repo:**
-  - `project/app/services/jd_parser.py` -> LLM structured JD extraction.
-  - `project/app/parsers/candidate_extractor.py` -> LLM structured candidate extraction.
-  - `project/app/services/scoring_engine.py` -> LLM structured rubric scores for 4 sections.
+## Intelligent JD Parsing
 
-### 3) Prompting Strategy
+* Extract:
 
-Prompting is embedded in service modules and designed for bounded outputs:
+  * required skills
+  * preferred skills
+  * qualifications
+  * experience requirements
+  * responsibilities
+  * domain relevance
 
-- **JD parsing prompt** instructs extraction from raw JD into `JobDescription`.
-- **Candidate extraction prompt** instructs strict extraction into `Candidate`, with defaults for missing fields.
-- **Scoring prompt** explicitly asks for `0-10` scores and one-line justifications per dimension.
-- **Guardrails in prompt logic:** explicit rules like not penalizing degree by graduation year and constraining communication criteria to resume quality signals.
+## Semantic Candidate Matching
 
-### 4) System Architecture Diagram
+* Uses embedding similarity (`all-MiniLM-L6-v2`) to compare:
+
+  * candidate skills
+  * job requirements
+  * semantic relevance
+
+## Explainable AI Scoring
+
+Candidates are scored across multiple hiring dimensions:
+
+| Dimension                  | Weight |
+| -------------------------- | ------ |
+| Skills Match               | 30%    |
+| Experience Relevance       | 25%    |
+| Education & Certifications | 15%    |
+| Projects & Portfolio       | 20%    |
+| Communication Quality      | 10%    |
+
+The platform generates:
+
+* dimension-level scores
+* weighted final score
+* one-line justifications
+* hiring recommendation
+
+---
+
+# New Feature — Skill Gap Analysis
+
+HireU includes an advanced Skill Gap Analysis engine that compares:
+
+* skills extracted from the Job Description
+* skills extracted from candidate resumes
+
+The system visually displays:
+
+* Matching Skills
+* Missing Skills
+* Skill Match Percentage
+* AI-generated hiring insights
+
+## AI Hiring Insight Engine
+
+The platform generates recruiter-style insights including:
+
+* candidate strengths
+* missing technical skills
+* interview readiness
+* hiring recommendation
+* next-step suggestion
+
+## Recommendation Levels
+
+| Match Score | Recommendation |
+| ----------- | -------------- |
+| 85%+        | Strong Hire    |
+| 70–84%      | Hire           |
+| 50–69%      | Consider       |
+| Below 50%   | Reject         |
+
+---
+
+# Project Architecture
 
 ```mermaid
 flowchart LR
-  A[JD Raw Text] --> B[parse_jd LLM]
-  B --> C[JobDescription Schema]
+  A[Job Description Input] --> B[LLM JD Parser]
+  B --> C[Structured JobDescription Schema]
 
-  D[PDF/DOCX/JSON Uploads] --> E[pdf_parser/docx_parser]
+  D[Resume Upload PDF/DOCX/JSON] --> E[Resume Parser]
   E --> F[Raw Candidate Text]
-  D --> G[JSON passthrough]
-  G --> F
-  F --> H[candidate_extractor LLM]
-  H --> I[Candidate Schema]
 
-  C --> J[scoring_engine]
-  I --> J
-  J --> K[semantic_matcher all-MiniLM-L6-v2]
-  J --> L[LLM rubric scores 4 dimensions]
-  K --> M[weighted_total in Python]
-  L --> M
-  M --> N[final_score recommendation]
-  N --> O[ranked shortlist + reports]
+  F --> G[Candidate Extraction LLM]
+  G --> H[Structured Candidate Schema]
+
+  C --> I[Scoring Engine]
+  H --> I
+
+  I --> J[Semantic Matching Engine]
+  I --> K[LLM Rubric Evaluation]
+
+  J --> L[Skill Gap Analysis]
+  K --> M[Weighted Score Calculation]
+
+  L --> N[AI Hiring Insights]
+  M --> O[Final Recommendation]
+
+  N --> P[Candidate Ranking Dashboard]
+  O --> P
 ```
 
-## Setup Instructions
+---
 
-From repository root:
+# Tech Stack
+
+## Backend
+
+* FastAPI
+* Uvicorn
+* Pydantic
+* LangChain
+* Google Gemini API
+
+## AI / NLP
+
+* Gemini 2.5 Flash
+* Sentence Transformers
+* all-MiniLM-L6-v2 embeddings
+
+## Resume Processing
+
+* PyMuPDF
+* python-docx
+
+## Frontend
+
+* Streamlit
+
+## Reporting & Utilities
+
+* Jinja2
+* ReportLab
+* Requests
+
+---
+
+# Model Choice
+
+## LLM Used
+
+* Model: `gemini-2.5-flash`
+* Provider: Google Generative AI
+
+## Why This Model?
+
+* Fast response latency
+* Strong structured extraction capabilities
+* Cost-efficient for iterative AI workflows
+* Reliable JSON-style structured outputs
+* Good balance between reasoning and speed
+
+The model is used for:
+
+* JD parsing
+* candidate extraction
+* rubric scoring
+* AI insight generation
+
+---
+
+# Framework & Orchestration
+
+## Framework
+
+* LangChain
+
+## Architecture Style
+
+HireU follows a modular orchestration pipeline rather than a multi-agent architecture.
+
+The pipeline includes:
+
+* JD parsing service
+* Candidate extraction service
+* Semantic scoring engine
+* Skill gap analysis engine
+* AI insight generation layer
+* Ranking & reporting system
+
+---
+
+# Prompting Strategy
+
+Prompt engineering is designed to produce:
+
+* deterministic outputs
+* structured responses
+* recruiter-friendly evaluations
+
+The prompts:
+
+* constrain outputs to structured schemas
+* enforce 0–10 scoring ranges
+* avoid hallucinated resume information
+* prevent inconsistent scoring logic
+
+Guardrails include:
+
+* structured output validation
+* bounded rubric logic
+* fallback defaults for missing fields
+* recommendation threshold controls
+
+---
+
+# Security Mitigations
+
+HireU includes multiple security-focused implementation practices.
+
+## Prompt Injection Protection
+
+* Structured Pydantic schemas
+* Controlled prompts
+* Output validation
+
+## API Key Protection
+
+* `.env` based secret handling
+* `.env` excluded via `.gitignore`
+* No hardcoded credentials
+
+## Data Privacy
+
+* Local resume processing
+* No persistent resume storage
+* Limited sensitive logging
+
+## Hallucination Reduction
+
+* Structured outputs
+* Deterministic weighted calculations
+* Human-readable justification requirements
+
+## Human-in-the-Loop
+
+* Recruiters can manually review scores
+* Override support included
+
+---
+
+# Setup Instructions
+
+Clone repository:
 
 ```bash
-cd project
+git clone https://github.com/watdasouvikdoin/HireU-AI-Resume-Analyzer.git
+cd HireU-AI-Resume-Analyzer/project
+```
+
+Create virtual environment:
+
+```bash
 python -m venv venv
 source venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
+```
+
+Configure environment variables:
+
+```bash
 cp .env.example .env
 ```
 
-Set required keys in `project/.env`:
+Add required keys:
 
-- `GOOGLE_API_KEY=...`
-- `API_KEY=...` (for endpoint auth when middleware is enabled)
+```env
+GOOGLE_API_KEY=your_key_here
+API_KEY=your_api_key_here
+```
 
-Run backend API:
+---
+
+# Running the Backend
 
 ```bash
-cd project
 uvicorn app.main:app --reload
 ```
 
-Run Streamlit UI (optional):
+# Running the Streamlit Frontend
 
 ```bash
-cd project
 streamlit run streamlit_app.py
 ```
 
-## How It Works (End-to-End)
+---
 
-1. `POST /api/v1/parse_jd` parses JD to `JobDescription`.
-2. `POST /api/v1/upload_resumes` extracts candidate profiles from uploaded files.
-3. `POST /api/v1/analyze_candidates` computes:
-   - skills score from semantic matching,
-   - 4 LLM rubric scores,
-   - weighted final score + recommendation.
-4. Results are sorted by `final_score` descending.
-5. `POST /api/v1/generate_report` exports shortlist as HTML/PDF/JSON.
+# End-to-End Workflow
 
-## Scoring Logic
+1. Upload Job Description
+2. Parse JD into structured schema
+3. Upload candidate resumes
+4. Extract candidate data
+5. Perform semantic matching
+6. Generate rubric scores
+7. Compute weighted final score
+8. Perform Skill Gap Analysis
+9. Generate AI hiring insights
+10. Rank candidates
+11. Generate shortlist reports
 
-In `project/app/services/scoring_engine.py`:
+---
 
-- **Skills (30%)**: semantic similarity against JD skills using `all-MiniLM-L6-v2`.
-- **Experience (25%), Education (15%), Projects (20%), Communication (10%)**: LLM scores (`0-10`) with structured output.
-- Final deterministic math:
-  - `weighted_total` out of 10
-  - `final_score_100 = weighted_total * 10`
-- Recommendation thresholds:
-  - `>= 75`: Strong Hire
-  - `>= 60`: Hire
-  - `>= 45`: Needs Review
-  - else: No-Hire
+# Scoring Logic
 
+## Weighted Evaluation System
 
-## Tech Stack
+| Component     | Weight |
+| ------------- | ------ |
+| Skills Match  | 30%    |
+| Experience    | 25%    |
+| Education     | 15%    |
+| Projects      | 20%    |
+| Communication | 10%    |
 
-- FastAPI, Uvicorn
-- Pydantic, pydantic-settings
-- LangChain, langchain-google-genai, google-generativeai
-- sentence-transformers (`all-MiniLM-L6-v2`)
-- PyMuPDF, python-docx
-- Jinja2, ReportLab
-- Streamlit, requests
+Final score is computed deterministically in Python for consistency and transparency.
+
+---
+
+# Future Improvements
+
+* LinkedIn API integration
+* ATS integration
+* Multi-agent recruiter workflows
+* Interview question generation
+* Resume ranking analytics dashboard
+* Authentication & recruiter accounts
+* Cloud deployment pipeline
+* Candidate trend visualization
+
+---
+
+# Screenshots
+
+Add screenshots of:
+
+* JD parsing
+* candidate analysis dashboard
+* skill gap analysis
+* AI hiring insights
+* ranking table
+* recommendation cards
+
+---
+
+# Author
+
+Developed by Souvik Ghosh
+
+HireU — Smarter AI hiring decisions for modern recruiters.
